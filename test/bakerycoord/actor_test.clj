@@ -1,0 +1,52 @@
+(ns bakerycoord.actor-test
+  (:require [clojure.test :refer [deftest is testing]]
+            [bakerycoord.actor :as actor]
+            [bakerycoord.store :as store]))
+
+(defn- fresh-store []
+  (let [st (store/mem-store)]
+    (store/register-baker! st {:baker-id "baker-1" :name "Kobo Tanaka"})
+    (store/register-bakery! st {:bakery-id "B-1" :name "Kobo Bakery" :max-supply-cost 2000})
+    st))
+
+(deftest commits-a-registered-work-log
+  (let [st (fresh-store)
+        graph (actor/build-graph {:store st})
+        request {:baker-id "baker-1" :op :log-work-record :stake :low
+                  :bakery-id "B-1" :task "batch-bake progress log"}
+        result (actor/run-request! graph request {} "thread-1")]
+    (is (= :done (:status result)))
+    (is (some? (get-in result [:state :record])))
+    (is (= 1 (count (store/records-of st "baker-1"))))))
+
+(deftest holds-an-unregistered-bakery-proposal
+  (let [st (fresh-store)
+        graph (actor/build-graph {:store st})
+        request {:baker-id "baker-1" :op :log-work-record :stake :low
+                  :bakery-id "B-ghost" :task "batch-bake progress log"}
+        result (actor/run-request! graph request {} "thread-2")]
+    (is (= :hold (:disposition (:state result))))
+    (is (empty? (store/records-of st "baker-1")))))
+
+(deftest interrupts-then-approves-safety-concern-on-human-approval
+  (let [st (fresh-store)
+        graph (actor/build-graph {:store st})
+        request {:baker-id "baker-1" :op :flag-safety-concern :stake :low
+                  :bakery-id "B-1" :hazard-type :burn-exposure-risk}
+        interrupted (actor/run-request! graph request {} "thread-3")]
+    (is (= :interrupted (:status interrupted)))
+    (is (empty? (store/records-of st "baker-1")))
+    (let [resumed (actor/approve! graph "thread-3")]
+      (is (= :done (:status resumed)))
+      (is (= 1 (count (store/records-of st "baker-1")))))))
+
+(deftest holds-a-scope-excluded-op-even-at-high-confidence
+  (testing "an actor run can never commit a proposal that would declare a batch fit for sale, finalize a food-safety-clearance decision, finalize an allergen-labeling determination, or override a shop safety officer's judgment, regardless of disposition path"
+    (let [st (fresh-store)
+          graph (actor/build-graph {:store st})
+          request {:baker-id "baker-1" :op :declare-batch-fit-for-sale :stake :low
+                    :bakery-id "B-1" :task "batch clearance decision"}
+          result (actor/run-request! graph request {} "thread-4")]
+      (is (= :done (:status result)))
+      (is (= :hold (:disposition (:state result))))
+      (is (empty? (store/records-of st "baker-1"))))))
