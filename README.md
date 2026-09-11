@@ -11,7 +11,7 @@ This repository designs a forkable OSS business for a bakery scheduling and logi
 (`bakerycoord.governor`), following the itonami actor pattern
 (ADR-2607121000): `:intake -> :advise -> :govern -> :decide -+-> :commit
 (:ok?) +-> :request-approval (:escalate?, human-in-the-loop interrupt)
-+-> :hold (:hard?)`. 21 tests / 45 assertions green (`clojure -M:test`).
++-> :hold (:hard?)`. 21 tests / 45 assertions green (`kbb -M:test`).
 HARD invariants (always hold, never overridable): baker provenance,
 bakery provenance, no-actuation (`:effect` must be `:propose`), a closed
 op-allowlist (`:log-work-record`, `:schedule-crew-operation`,
