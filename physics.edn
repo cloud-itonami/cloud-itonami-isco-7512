@@ -1,0 +1,44 @@
+;; What this vertical's robot physically does, declared for
+;; kotoba.robotics.process (kotoba-lang/robotics). `kbb -M:physics` runs it.
+;;
+;; README "Robotics premise": a bakery scheduling/logistics coordination
+;; robot handles crew scheduling, batch/inventory records and baking-
+;; ingredient supply orders for bakers, pastry-cooks and confectionery makers
+;; (ISCO 7512). Its physical work: hauling flour sacks to the mixer, loading
+;; baking trays into the rack trolley, and the bake itself (how long until
+;; the crumb core of a loaf is done).
+;;
+;; Every number without a cited source is marked `estimate` in its :basis.
+;; Replacing an estimate with a sourced value is this bot's growth work.
+{:physics/schema "itonami.physical-ai.spec.v1"
+ :repo "cloud-itonami/cloud-itonami-isco-7512"
+ :cases
+ [{:id :flour-sacks-to-mixer
+   :kind :transport
+   :procedure "cart hauls 25 kg flour sacks from the dry store to the spiral mixer"
+   :params {:mass-kg 60.0 :distance-m 20.0 :v-max-mps 1.0 :a-max-mps2 0.5
+            :brake-decel-mps2 0.8 :drive-force-n 150.0 :crr 0.02
+            :cog-height-m 0.45 :support-half-length-m 0.30 :max-time-s 1200.0}
+   :sweep {:param :payload-kg :values [25.0 75.0 150.0 250.0 400.0]}
+   :quantity :cycle-time-s
+   :limit {:max 35.0 :basis "estimate: one store-to-mixer leg between dough batches"}
+   :boundary {:lo 10.0 :hi 1500.0}}
+  {:id :tray-into-rack-trolley
+   :kind :manipulator
+   :procedure "arm slides a loaded baking tray from the make-up bench into the top runner of the rack trolley"
+   :params {:l1-m 0.50 :l2-m 0.45 :m1-kg 5.0 :m2-kg 4.0
+            :from [0.55 0.10] :to [0.60 0.65] :duration-s 2.5 :steps 500}
+   :sweep {:param :payload-kg :values [1.0 2.5 4.0 6.0 9.0]}
+   :quantity :peak-tau1-nm
+   :limit {:max 60.0 :basis "estimate: continuous shoulder torque of a light collaborative arm (~5 kg class)"}
+   :boundary {:lo 0.1 :hi 30.0}}
+  {:id :loaf-crumb-core
+   :kind :thermal
+   :procedure "a loaf in the 220 C deck oven until its crumb core (insulated symmetry plane) reaches 96 C; evaporation and crust formation are not modelled"
+   :params {:thickness-m 0.04 :conductivity-w-mk 0.40 :density-kg-m3 450.0 :specific-heat-j-kgk 2800.0
+            :t0-c 30.0 :t-hot-c 220.0 :h-front-w-m2k 25.0 :h-back-w-m2k 0.0 :t-back-ambient-c 220.0
+            :threshold-c 96.0 :duration-s 7200.0 :nodes 11}
+   :sweep {:param :thickness-m :values [0.02 0.03 0.04 0.05 0.06]}
+   :quantity :time-to-threshold-s
+   :limit {:max 2400.0 :basis "estimate: 40-minute bake slot of the deck oven; the 96 C 'done' core is a baker's rule of thumb"}
+   :boundary {:lo 0.01 :hi 0.1}}]}
