@@ -1,7 +1,7 @@
 (ns bakerycoord.store
   "SSoT for the ISCO-08 7512 bakers, pastry-cooks and confectionery
   makers bakery scheduling/logistics coordination actor (itonami
-  actor pattern, ADR-2607121000 / CLAUDE.md Actors section; README's
+  actor pattern, ADR-2607121000 / AGENTS.md Actors section; README's
   'Robotics premise' — a bakery scheduling/logistics coordination
   robot performs crew scheduling, batch/inventory/progress record
   logging and baking-ingredients supply-order coordination for a
