@@ -2,7 +2,7 @@
   "BakeryCoordActor — the ISCO-08 7512 bakers, pastry-cooks and
   confectionery makers bakery scheduling/logistics coordination
   actor as a `langgraph.graph/state-graph` (ADR-2607121000 /
-  CLAUDE.md Actors section). One graph run = one bakery-coordination
+  AGENTS.md Actors section). One graph run = one bakery-coordination
   operation request (intake -> advise -> govern -> decide ->
   commit/hold, with a human-approval interrupt for escalated
   proposals). No infinite internal loop; checkpointed per superstep
